@@ -1,0 +1,53 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fix files uploaded inside a subfolder
+        run: |
+          if [ ! -f settings.gradle ] && [ -d kaso ]; then
+            shopt -s dotglob; mv kaso/* .; fi
+
+      - name: Put the game inside the app
+        run: |
+          rm -rf app/src/main/assets/www
+          mkdir -p app/src/main/assets/www
+          cp -r docs/. app/src/main/assets/www/
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Build APK
+        run: gradle assembleDebug --no-daemon
+
+      - name: Rename APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk kaso-sa-kalye.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kaso-sa-kalye-apk
+          path: kaso-sa-kalye.apk
+
+      - name: Publish to the apk-latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete apk-latest --yes --cleanup-tag || true
+          gh release create apk-latest kaso-sa-kalye.apk --target "$GITHUB_SHA" --title "Latest APK" --notes "Built from $GITHUB_SHA"
