@@ -1,0 +1,43 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.markdave.kaso'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.markdave.kaso'
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+
+    // One fixed key, so a new APK installs over the old one without uninstalling.
+    signingConfigs {
+        shared {
+            storeFile file('kaso.keystore')
+            storePassword 'kasokaso'
+            keyAlias 'kaso'
+            keyPassword 'kasokaso'
+        }
+    }
+
+    buildTypes {
+        debug { signingConfig signingConfigs.shared }
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.shared
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'org.java-websocket:Java-WebSocket:1.5.6'
+}

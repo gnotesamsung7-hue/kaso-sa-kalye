@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Kaso sa Kalye Maligaya</title>
+<style>
+@font-face{font-family:'Lilita One';src:url(fonts/LilitaOne-Regular.ttf) format('truetype');font-display:swap}
+@font-face{font-family:'Nunito';src:url(fonts/Nunito.ttf) format('truetype');font-weight:200 1000;font-display:swap}
+:root{--ink:#1d1b33;--grass:#E4F0DC;--blue:#1F4E9C;--orange:#B4530F;--green:#1E7A4A;--red:#B3123F;--yellow:#F5C518;--road:#6f7580;--paper:#ffffff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--grass);color:var(--ink);font-family:'Nunito',system-ui,sans-serif;font-size:16px}
+body{padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0);overflow-x:hidden}
+button{font-family:inherit;color:inherit}
+.hide{display:none!important}
+.wrap{max-width:560px;margin:0 auto;padding:12px 12px 24px}
+h1,.disp{font-family:'Lilita One',sans-serif;font-weight:400;margin:0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:10px 18px;border:3px solid var(--ink);border-radius:14px;background:var(--paper);font-weight:800;font-size:17px;cursor:pointer;box-shadow:0 4px 0 var(--ink);transition:transform .08s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+.btn:disabled{opacity:.45;box-shadow:none;transform:none}
+.btn:focus-visible,.tile:focus-visible,.chip:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.btn.y{background:var(--yellow)}
+.btn.b{background:var(--blue);color:#fff}
+.btn.r{background:var(--red);color:#fff}
+.btn.wide{width:100%}
+.panel{background:var(--paper);border:3px solid var(--ink);border-radius:16px;padding:14px}
+.note{font-size:14px;line-height:1.4}
+.field{display:flex;flex-direction:column;gap:6px;font-weight:800}
+.field input{font:inherit;font-weight:700;font-size:18px;padding:10px 12px;border:3px solid var(--ink);border-radius:12px;background:#fff;color:var(--ink);min-height:48px}
+/* title */
+#title .hero{text-align:center;padding:18px 6px 10px}
+#title h1{font-size:44px;line-height:.95;color:var(--blue)}
+#title .tag{font-weight:800;font-size:17px;margin-top:8px}
+.flags{display:flex;justify-content:center;gap:6px;margin-bottom:10px}
+.flags i{width:0;height:0;border-left:13px solid transparent;border-right:13px solid transparent;border-top:24px solid}
+.stack{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>.btn{flex:1}
+#roomlist{display:flex;flex-direction:column;gap:8px}
+/* lobby */
+.plist{display:flex;flex-direction:column;gap:8px}
+.pl{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;padding:8px 10px;border:2px solid #c9cdd3;border-radius:12px}
+.pawn{width:30px;height:30px;border-radius:50%;border:2.5px solid var(--ink);display:inline-flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;flex:none}
+.addr{font-family:'Lilita One',sans-serif;font-size:30px;letter-spacing:1px;color:var(--blue)}
+/* game */
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.top .disp{font-size:20px;color:var(--blue)}
+.turnbar{display:flex;align-items:center;gap:10px;background:var(--ink);color:#fff;border-radius:14px;padding:8px 12px;font-weight:800;font-size:16px;margin-bottom:10px}
+.turnbar.mine{background:var(--yellow);color:var(--ink);border:3px solid var(--ink);padding:6px 10px}
+.board{display:grid;grid-template-columns:minmax(0,1fr) 12px minmax(0,1fr) 12px minmax(0,1fr);grid-template-rows:minmax(0,1fr) 12px minmax(0,1fr) 12px minmax(0,1fr);aspect-ratio:1/1;background:var(--grass);border:3px solid var(--ink);border-radius:18px;padding:8px}
+.tile{position:relative;border:3px solid var(--green);border-radius:12px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px;text-align:center;font:inherit;cursor:default;min-width:0}
+.tile.plaza{background:#FFE680}
+.tile svg{width:30%;height:auto;max-width:34px}
+.tile .tn{font-family:'Lilita One',sans-serif;font-size:clamp(12px,3.6vw,17px);line-height:1.02}
+.tile.reach{cursor:pointer;border-color:var(--ink);border-style:dashed;animation:glow 1.1s ease-in-out infinite alternate}
+@keyframes glow{from{box-shadow:0 0 0 0 rgba(245,197,24,.9)}to{box-shadow:0 0 0 6px rgba(245,197,24,.9)}}
+.tile .pawns{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;min-height:22px}
+.tile .pawns .pawn{width:22px;height:22px;font-size:11px;border-width:2px}
+.hroad{align-self:center;height:12px;background:var(--road);background-image:linear-gradient(90deg,#fff 50%,transparent 50%);background-size:8px 2px;background-repeat:repeat-x;background-position:0 50%}
+.vroad{justify-self:center;width:12px;background:var(--road);background-image:linear-gradient(#fff 50%,transparent 50%);background-size:2px 8px;background-repeat:repeat-y;background-position:50% 0}
+.act{margin-top:12px}
+.act .msg{font-weight:800;font-size:17px;margin-bottom:10px;line-height:1.35}
+.die{width:64px;height:64px;border:3px solid var(--ink);border-radius:14px;background:#fff;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:8px;flex:none}
+.die i{width:11px;height:11px;border-radius:50%;background:var(--ink);place-self:center;visibility:hidden}
+.die i.on{visibility:visible}
+.die.spin{animation:spin .5s ease-out}
+@keyframes spin{0%{transform:rotate(0) scale(.6)}60%{transform:rotate(300deg) scale(1.1)}100%{transform:rotate(360deg) scale(1)}}
+.dierow{display:flex;align-items:center;gap:14px}
+.rulesmini{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:14px;margin-top:10px}
+.rulesmini b{background:var(--ink);color:#fff;border-radius:6px;text-align:center;padding:0 6px}
+.log{margin-top:10px;display:flex;flex-direction:column;gap:4px;font-size:14px}
+.log div{background:rgba(255,255,255,.7);border-radius:8px;padding:4px 8px}
+.log div:first-child{background:#fff;font-weight:800}
+.tabs{position:sticky;bottom:0;display:flex;gap:6px;padding:8px 0 0;margin-top:12px;background:var(--grass)}
+.tabs button{flex:1;min-height:48px;border:3px solid var(--ink);border-radius:12px;background:#fff;font-weight:800;font-size:15px}
+.tabs button[aria-selected=true]{background:var(--ink);color:#fff}
+/* cards */
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.card{border:3px solid var(--c);border-radius:12px;background:#fff;overflow:hidden;display:flex;flex-direction:column;text-align:center;min-width:0}
+.card .band{background:var(--c);color:#fff;font-weight:800;font-size:11px;letter-spacing:.06em;padding:3px 6px;display:flex;justify-content:space-between}
+.card .body{padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:3px}
+.card .ic{width:46px;height:46px;border-radius:50%;background:var(--t);display:flex;align-items:center;justify-content:center}
+.card .ic svg{width:30px;height:30px}
+.card .nm{font-family:'Lilita One',sans-serif;font-size:16px;line-height:1.05}
+.card .en{font-size:12px;font-weight:800;color:var(--c)}
+.card.big{max-width:240px;margin:0 auto;width:100%}
+.card.big .ic{width:84px;height:84px}.card.big .ic svg{width:52px;height:52px}
+.card.big .nm{font-size:28px}.card.big .en{font-size:14px}
+.card.big .tx{font-size:16px;line-height:1.3;padding:0 8px 6px}
+.card.big .band{font-size:13px;padding:6px 10px}
+.sec{font-family:'Lilita One',sans-serif;font-size:22px;margin:14px 0 8px}
+/* notebook */
+.nb{display:flex;flex-direction:column;gap:12px}
+.nbsec{border:3px solid var(--c);border-radius:14px;overflow:hidden;background:#fff}
+.nbsec .hd{background:var(--c);color:#fff;font-weight:800;padding:6px 10px;display:flex;justify-content:space-between}
+.nbrow{display:flex;align-items:center;gap:8px;padding:4px 6px 4px 10px;border-top:1px solid #d6d9de;min-height:48px}
+.nbrow .nm{flex:1;font-weight:800}
+.nbrow .why{font-size:12px;font-weight:700;color:#4a4f57}
+.nbrow.out .nm{text-decoration:line-through;color:#6b7078}
+.mark{width:48px;height:40px;border:2px solid var(--ink);border-radius:10px;background:#fff;font-size:20px;font-weight:900}
+.mark.x{background:#ffe1e6;color:var(--red)}.mark.q{background:#fff3b8}.mark.k{background:#e6f5ec;color:var(--green)}
+/* modal */
+#scrim{position:fixed;inset:0;background:rgba(20,18,40,.55);display:flex;align-items:flex-end;justify-content:center;z-index:50;padding:12px}
+#sheet{width:100%;max-width:560px;max-height:92vh;overflow:auto;background:#fff;border:3px solid var(--ink);border-radius:20px;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom,0))}
+#sheet h2{font-family:'Lilita One',sans-serif;font-weight:400;font-size:28px;margin:0 0 8px;line-height:1.05}
+.chips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.chip{min-height:52px;border:3px solid var(--c);border-radius:12px;background:#fff;font-weight:800;font-size:14px;line-height:1.1;padding:6px 4px;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--c);color:#fff}
+.chip.gone{opacity:.5;text-decoration:line-through}
+.lbl{font-weight:800;margin:12px 0 6px}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0}
+.confetti{font-family:'Lilita One',sans-serif;font-size:20px;color:var(--red);text-align:center}
+.toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;font-weight:800;z-index:80;max-width:90vw;text-align:center}
+@media (prefers-reduced-motion:reduce){.tile.reach{animation:none;box-shadow:0 0 0 5px rgba(245,197,24,.9)}.die.spin{animation:none}}
+</style>
+</head>
+<body>
+
+<div id="title" class="wrap">
+  <div class="hero">
+    <div class="flags" aria-hidden="true"><i style="border-top-color:#B3123F"></i><i style="border-top-color:#F5C518"></i><i style="border-top-color:#1F4E9C"></i><i style="border-top-color:#1E7A4A"></i><i style="border-top-color:#B4530F"></i></div>
+    <h1>Kaso sa Kalye Maligaya</h1>
+    <div class="tag">Sino ang humiram? A fiesta mystery for 2 to 4 detectives.</div>
+  </div>
+  <div class="panel stack">
+    <label class="field">Your name<input id="name" maxlength="12" autocomplete="off" placeholder="Type your name"></label>
+    <button class="btn y wide" id="hostBtn">Host a game on this phone</button>
+    <div>
+      <div style="font-weight:800;margin-bottom:6px">Games on this Wi-Fi</div>
+      <div id="roomlist"><p class="note" style="margin:0">Looking for games…</p></div>
+    </div>
+    <label class="field">Or type the host’s address<input id="ipin" inputmode="decimal" autocomplete="off" placeholder="192.168.1.23"></label>
+    <button class="btn wide" id="joinBtn">Join this address</button>
+    <p class="note" id="titlenote" style="margin:0">Everyone joins the same Wi-Fi, or the host phone’s hotspot. No internet needed.</p>
+  </div>
+  <div style="margin-top:12px"><button class="btn wide" id="howBtn">How to play</button></div>
+</div>
+
+<div id="lobby" class="wrap hide">
+  <div class="hero" style="text-align:center;padding:10px 0">
+    <h1 style="font-size:32px;color:var(--blue)">Waiting for detectives</h1>
+  </div>
+  <div class="panel stack">
+    <div id="hostinfo"></div>
+    <div class="plist" id="plist"></div>
+    <p class="note" id="lobbynote" style="margin:0"></p>
+    <button class="btn y wide hide" id="startBtn">Start the case</button>
+    <button class="btn wide" id="leaveBtn">Leave</button>
+  </div>
+</div>
+
+<div id="game" class="wrap hide">
+  <div class="top"><div class="disp">Kaso sa Kalye Maligaya</div><button class="btn" id="menuBtn" style="min-height:40px;padding:4px 12px;font-size:14px">Menu</button></div>
+  <div id="turnbar" class="turnbar"></div>
+  <div id="tabBoard">
+    <div class="board" id="board"></div>
+    <div class="panel act" id="act"></div>
+    <div class="log" id="log"></div>
+  </div>
+  <div id="tabCards" class="hide"></div>
+  <div id="tabNote" class="hide"></div>
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tb1" aria-selected="true">Board</button>
+    <button role="tab" id="tb2" aria-selected="false">My cards</button>
+    <button role="tab" id="tb3" aria-selected="false">Notebook</button>
+  </div>
+</div>
+
+<div id="scrim" class="hide"><div id="sheet" role="dialog" aria-modal="true"></div></div>
+
+<script>
+'use strict';
+const PORT=41777;
+const LAN=!!(window.Android&&window.Android.startHost);
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clean=s=>String(s||'').replace(/[\u0000-\u001f]/g,'').trim();
+
+/* ---------- cards ---------- */
+const KIND={
+ S:{label:'SUSPEK',c:'#1F4E9C',t:'#E3ECF8',word:'Who'},
+ G:{label:'GAMIT',c:'#B4530F',t:'#FBEBDD',word:'What'},
+ L:{label:'LUGAR',c:'#1E7A4A',t:'#E0F1E7',word:'Where'},
+ B:{label:'BALITA',c:'#B3123F',t:'#F9E1E8',word:''}
+};
+const IC={
+ person:'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M4 21c0-4 4-6 8-6s8 2 8 6',
+ star:'M12 2l3 6.5 7 .8-5.2 4.8 1.5 7L12 17.5 5.7 21.1l1.5-7L2 9.3l7-.8z',
+ mega:'M3 10v4h4l8 5V5l-8 5H3z M18 9a4 4 0 0 1 0 6 M20.5 6.5a8 8 0 0 1 0 11'
+};
+const CARDS={
+ S1:{n:'Aling Rosing',en:'Sari-sari store owner',t:'Knows every suki by name.'},
+ S2:{n:'Mang Ben',en:'Jeepney driver',t:'Hums a song on every trip.'},
+ S3:{n:'Kuya Jun',en:'Taho vendor',t:'Calls “Tahooo!” every morning.'},
+ S4:{n:'Ate Liza',en:'Grade 1 teacher',t:'Loves neat handwriting.'},
+ S5:{n:'Lolo Pido',en:'Fisherman',t:'Tells the best stories at sunset.'},
+ S6:{n:'Tita Baby',en:'Choir leader',t:'Practices fiesta songs all day.'},
+ G1:{n:'Gintong Parol',en:'Golden star lantern',t:'The brightest light of the fiesta.',i:IC.star},
+ G2:{n:'Sungka',en:'Sungka game board',t:'Ready for the big tournament.',i:'M2 9h20v6H2z M6 12h.01 M10 12h.01 M14 12h.01 M18 12h.01'},
+ G3:{n:'Banderitas',en:'Fiesta flags',t:'Colorful flags for the whole street.',i:'M2 5c6 3 14 3 20 0 M4 6l2 6 2-5 M10 7l2 6 2-6 M16 7l2 5 2-6'},
+ G4:{n:'Bibingka',en:'Tray of rice cakes',t:'Warm and ready for merienda.',i:'M3 14h18 M5 14a7 4 0 0 0 14 0 M8 11a4 2 0 0 1 8 0 M9 7c0-1 1-1 1-2 M13 7c0-1 1-1 1-2'},
+ G5:{n:'Salakot',en:'Woven farmer’s hat',t:'For the parade float.',i:'M2 16L12 5l10 11z M12 5v-1 M6 16c2 2 10 2 12 0'},
+ G6:{n:'Gitara',en:'Guitar',t:'For the fiesta band.',i:'M14 10l6-6 M18 2l4 4 M9 9a4 4 0 0 0-5 5 4 4 0 0 0 6 6 4 4 0 0 0 5-5 3 3 0 0 0-6-6z M9.5 14.5a1 1 0 1 0 0-.01'},
+ L1:{n:'Palayan',en:'Rice field',t:'Green rice as far as you can see.',i:'M12 21V9 M12 9c-3 0-5-2-5-5 3 0 5 2 5 5z M12 9c3 0 5-2 5-5-3 0-5 2-5 5z M12 15c-3 0-5-2-5-5 M12 15c3 0 5-2 5-5'},
+ L2:{n:'Paaralan',en:'School',t:'Where kids learn and play.',i:'M3 21h18 M5 21V10l7-5 7 5v11 M10 21v-5h4v5 M12 5V2l4 1-4 1'},
+ L3:{n:'Dalampasigan',en:'Beach',t:'Boats, shells and soft sand.',i:'M2 17c2-2 4-2 6 0s4 2 6 0 4-2 6 0 M2 21c2-2 4-2 6 0s4 2 6 0 4-2 6 0 M8 9a4 4 0 1 0 8 0a4 4 0 1 0-8 0'},
+ L4:{n:'Palengke',en:'Market',t:'Fish, fruit and lots of noise!',i:'M3 9l2-5h14l2 5 M3 9c0 2 4 2 4 0 0 2 5 2 5 0 0 2 5 2 5 0 0 2 4 2 4 0 M5 11v10h14V11 M10 21v-5h4v5'},
+ L5:{n:'Plaza',en:'Town plaza',t:'The fiesta stage is here.',i:IC.star},
+ L6:{n:'Basketball Court',en:'Covered court',t:'Liga games every Sunday.',i:'M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0 M3 12h18 M12 3v18 M5.6 5.6c3 3 3 9.8 0 12.8 M18.4 5.6c-3 3-3 9.8 0 12.8'},
+ L7:{n:'Panaderya',en:'Bakery',t:'Fresh pandesal every morning.',i:'M4 13a8 5 0 0 1 16 0v6H4z M8 10l1 3 M12 9v4 M16 10l-1 3'},
+ L8:{n:'Sari-sari Store',en:'Corner store',t:'Snacks, soap and candies.',i:'M3 21h18 M4 21V8h16v13 M3 8l2-4h14l2 4 M7 12h10v5H7z'},
+ L9:{n:'Barangay Hall',en:'Village hall',t:'Where Kapitana plans the fiesta.',i:'M3 21h18 M4 10h16 M12 3l9 7H3z M6 10v11 M10 10v11 M14 10v11 M18 10v11'},
+ B1:{n:'Jeepney Ride!',en:'Para po!',t:'Ride to any place on the board now.'},
+ B2:{n:'Brownout!',en:'Lights out',t:'No question this turn. You can still move.'},
+ B3:{n:'Merienda Time!',en:'Snack break',t:'Yum! Take another turn after this one.'},
+ B4:{n:'Kapitbahay Hint',en:'Help from a neighbor',t:'The player on your right shows you one card.'},
+ B5:{n:'Traffic!',en:'Stuck on the road',t:'Don’t move this turn, but you may still ask.'},
+ B6:{n:'Bayanihan!',en:'Everyone helps',t:'Every player who can shows you one card.'}
+};
+for(const id in CARDS){const k=id[0];CARDS[id].k=k;if(!CARDS[id].i)CARDS[id].i=k==='S'?IC.person:k==='B'?IC.mega:IC.star}
+const IDS=k=>Object.keys(CARDS).filter(id=>id[0]===k);
+const PLAZA=4;
+const placeId=i=>'L'+(i+1);
+const NEI=[[1,3],[0,2,4],[1,5],[0,4,6],[1,3,5,7],[2,4,8],[3,7],[4,6,8],[5,7]];
+const PAWNS=[{c:'#D7263D',f:'#fff'},{c:'#2B6CD9',f:'#fff'},{c:'#F2B705',f:'#1d1b33'},{c:'#1E9E5A',f:'#fff'}];
+
+function svg(d,col,w){return '<svg viewBox="0 0 24 24" fill="none" stroke="'+col+'" stroke-width="'+(w||1.8)+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+d+'"></path></svg>'}
+function cardHTML(id,big){const c=CARDS[id],K=KIND[c.k];
+ return '<div class="card'+(big?' big':'')+'" style="--c:'+K.c+';--t:'+K.t+'"><div class="band"><span>'+K.label+'</span><span>'+id+'</span></div><div class="body"><div class="ic">'+svg(c.i,K.c)+'</div><div class="nm">'+esc(c.n)+'</div><div class="en">'+esc(c.en)+'</div>'+(big?'<div class="tx">'+esc(c.t)+'</div>':'')+'</div></div>'}
+function pawnHTML(p){const P=PAWNS[p.color]||PAWNS[0];return '<span class="pawn" style="background:'+P.c+';color:'+P.f+'" aria-label="'+esc(p.name)+'">'+esc((p.name||'?').charAt(0).toUpperCase())+'</span>'}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+/* ---------- small helpers ---------- */
+let toastT=0;
+function toast(msg,ms){let t=document.querySelector('.toast');if(!t){t=document.createElement('div');t.className='toast';t.setAttribute('role','status');document.body.appendChild(t)}t.textContent=msg;t.classList.remove('hide');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.add('hide'),ms||2600)}
+let actx=null;
+function beep(f,len){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=f;o.type='triangle';g.gain.setValueAtTime(.18,actx.currentTime);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+(len||.18));o.connect(g).connect(actx.destination);o.start();o.stop(actx.currentTime+(len||.18))}catch(e){}}
+function buzz(ms){try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}}
+function show(id,on){$(id).classList.toggle('hide',!on)}
+function screen(w){['title','lobby','game'].forEach(s=>show(s,s===w))}
+
+/* ---------- network ---------- */
+let ws=null,myId=null,hostId=null,isHost=false,connected=false,hostAddr='';
+function connect(url){return new Promise((res,rej)=>{
+ let done=false;try{ws=new WebSocket(url)}catch(e){return rej(e)}
+ const to=setTimeout(()=>{if(!done){done=true;try{ws.close()}catch(e){}rej(new Error('timeout'))}},6000);
+ ws.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(x){return}
+  if(m.t==='hi'){myId=String(m.id);hostId=String(m.host);isHost=myId===hostId;connected=true;if(!done){done=true;clearTimeout(to);res()}}
+  else if(m.t==='m'){if(isHost&&m.d&&m.d.type==='act')hostAct(String(m.from),m.d.a);else onMsg(m.d)}
+  else if(m.t==='bye'){if(isHost)hostLeft(String(m.id))}};
+ ws.onclose=()=>{if(!done){done=true;clearTimeout(to);rej(new Error('closed'));return}
+  if(connected){connected=false;if(!quitting){toast(isHost?'The game stopped.':'Lost connection to the host.',3000);setTimeout(()=>location.reload(),2600)}}};
+ ws.onerror=()=>{};
+})}
+function wsSend(to,d){if(ws&&ws.readyState===1)ws.send(JSON.stringify({t:'m',to:to,d:d}))}
+function act(a){if(isHost)hostAct(myId,a);else wsSend(hostId,{type:'act',a:a})}
+function deliver(pid,msg){if(pid===myId)setTimeout(()=>onMsg(msg),0);else wsSend(pid,msg)}
+
+/* ---------- HOST: game rules ---------- */
+let H=null;
+function newHost(){return {phase:'lobby',players:[],env:null,faceUp:[],bdeck:[],bdisc:[],turn:0,step:'',roll:0,rollSeq:0,reach:[],moveMode:0,balita:null,noAsk:false,extra:false,bay:false,ask:null,log:[],winner:null,gameId:0,endWhy:''}}
+const P=id=>H.players.find(p=>p.id===id);
+function hlog(s){H.log.unshift(s);if(H.log.length>40)H.log.length=40}
+function cur(){return H.players[H.turn]}
+function view(pid){const p=P(pid),a=H.ask;
+ return {phase:H.phase,me:pid,host:hostId,gameId:H.gameId,
+  players:H.players.map(x=>({id:x.id,name:x.name,color:x.color,pos:x.pos,n:x.hand.length,skip:x.skip})),
+  hand:p?p.hand:[],faceUp:H.faceUp,turnId:cur()?cur().id:null,step:H.step,roll:H.roll,rollSeq:H.rollSeq,
+  reach:(cur()&&cur().id===pid)?H.reach:[],balita:H.balita,noAsk:H.noAsk,bay:H.bay,extra:H.extra,
+  ask:a?{kind:a.kind,who:a.who||'',asker:a.asker,askerName:(P(a.asker)||{}).name||'',s:a.s,g:a.g,l:a.l,curId:a.cur||null,curName:a.cur?(P(a.cur)||{}).name:''}:null,
+  opts:(a&&a.cur===pid)?a.opts:null,log:H.log.slice(0,8),winner:H.winner,endWhy:H.endWhy,
+  answer:H.phase==='over'?H.env:null}}
+function sync(){if(!H)return;for(const p of H.players)deliver(p.id,{type:'state',v:view(p.id)})}
+function hostAct(pid,a){if(!H||!a||typeof a!=='object')return;const p=P(pid);
+ if(a.a==='hello'){
+  if(p)return sync();
+  if(H.phase!=='lobby')return deliver(pid,{type:'reject',why:'That game already started. Wait for the next one.'});
+  if(H.players.length>=4)return deliver(pid,{type:'reject',why:'That game is full. Up to 4 detectives can play.'});
+  const used=H.players.map(x=>x.color);let color=0;while(used.includes(color))color++;
+  H.players.push({id:pid,name:clean(a.name).slice(0,12)||'Detective',color:color,pos:PLAZA,hand:[],skip:0});
+  return sync();
+ }
+ if(!p)return;
+ if(a.a==='start'&&pid===myId&&(H.phase==='lobby'||H.phase==='over')){if(H.players.length<2)return;return startGame()}
+ if(a.a==='lobby'&&pid===myId&&H.phase==='over'){H.phase='lobby';H.log=[];return sync()}
+ if(H.phase!=='play')return;
+ if(a.a==='show')return doShow(pid,String(a.card));
+ if(cur().id!==pid)return;
+ if(a.a==='roll'&&H.step==='roll')return doRoll();
+ if(a.a==='balitaOk'&&H.step==='balita')return applyBalita();
+ if(a.a==='move'&&H.step==='move')return doMove(a.to|0);
+ if(a.a==='ask'&&H.step==='ask'&&!H.noAsk)return doAsk(String(a.s),String(a.g),String(a.to||''));
+ if(a.a==='accuse'&&(H.step==='ask'||H.step==='after'))return doAccuse(String(a.s),String(a.g),String(a.l));
+ if(a.a==='end'&&((H.step==='ask'&&H.noAsk)||H.step==='after'))return endTurn();
+}
+function startGame(){
+ H.gameId++;H.phase='play';H.log=[];H.winner=null;H.endWhy='';
+ const S=shuffle(IDS('S')),G=shuffle(IDS('G')),L=shuffle(IDS('L'));
+ H.env={s:S.pop(),g:G.pop(),l:L.pop()};
+ const rest=shuffle(S.concat(G,L));const n=H.players.length,per=Math.floor(rest.length/n);
+ H.players.forEach(p=>{p.hand=rest.splice(0,per).sort();p.pos=PLAZA;p.skip=0});
+ H.faceUp=rest.sort();H.bdeck=shuffle(IDS('B'));H.bdisc=[];
+ H.turn=Math.floor(Math.random()*n);
+ hlog('The case begins! '+cur().name+' goes first.');
+ startTurn();
+}
+function startTurn(){
+ H.noAsk=false;H.bay=false;H.ask=null;H.balita=null;H.reach=[];H.roll=0;
+ let guard=0;
+ while(cur().skip>0&&guard++<8){cur().skip--;hlog(cur().name+' skips this turn.');H.turn=(H.turn+1)%H.players.length}
+ H.step='roll';sync();
+}
+function doRoll(){
+ const r=1+Math.floor(Math.random()*6);H.roll=r;H.rollSeq++;
+ if(r===1){
+  if(!H.bdeck.length){H.bdeck=shuffle(H.bdisc);H.bdisc=[]}
+  H.balita=H.bdeck.pop();H.bdisc.push(H.balita);H.step='balita';
+  hlog(cur().name+' rolled 1 and drew Balita: '+CARDS[H.balita].n);
+ }else{
+  H.moveMode=r>=6?'any':r>=4?2:1;
+  hlog(cur().name+' rolled '+r+'.');enterMove();
+ }
+ sync();
+}
+function applyBalita(){
+ const b=H.balita;H.moveMode=1;
+ if(b==='B1')H.moveMode='any';
+ if(b==='B2')H.noAsk=true;
+ if(b==='B3')H.extra=true;
+ if(b==='B5')H.moveMode=0;
+ if(b==='B6')H.bay=true;
+ H.balita=null;
+ if(b==='B4'){
+  const n=H.players.length,right=H.players[(H.turn-1+n)%n];
+  if(right&&right.id!==cur().id&&right.hand.length){
+   H.ask={kind:'hint',asker:cur().id,order:[right.id],i:0};H.step='answer';nextResponder();return;
+  }
+ }
+ enterMove();sync();
+}
+function enterMove(){
+ const from=cur().pos;
+ if(H.moveMode===0){H.reach=[];H.step='ask';return}
+ if(H.moveMode==='any'){H.reach=[0,1,2,3,4,5,6,7,8].filter(i=>i!==from)}
+ else{const d={};d[from]=0;const q=[from];while(q.length){const x=q.shift();for(const y of NEI[x])if(d[y]==null){d[y]=d[x]+1;q.push(y)}}
+  H.reach=Object.keys(d).map(Number).filter(i=>i!==from&&d[i]<=H.moveMode)}
+ H.step='move';
+}
+function doMove(to){if(!H.reach.includes(to))return;cur().pos=to;H.reach=[];hlog(cur().name+' went to the '+CARDS[placeId(to)].n+'.');H.step='ask';sync()}
+function doAsk(s,g,to){
+ if(!/^S[1-6]$/.test(s)||!/^G[1-6]$/.test(g))return;
+ const l=placeId(cur().pos),n=H.players.length;let order=[];
+ if(H.bay){for(let k=1;k<n;k++)order.push(H.players[(H.turn+k)%n].id)}
+ else{const t=P(to);if(!t||t.id===cur().id)return;order=[t.id]}
+ const who=H.bay?'everyone':P(order[0]).name;
+ H.ask={kind:'ask',asker:cur().id,s:s,g:g,l:l,order:order,i:0,shown:0,who:H.bay?'':who};
+ hlog(cur().name+' asks '+who+': '+CARDS[s].n+', '+CARDS[g].n+', '+CARDS[l].n+(H.bay?' (Bayanihan!)':''));
+ H.step='answer';nextResponder();
+}
+function nextResponder(){
+ const a=H.ask;a.cur=null;a.opts=null;
+ while(a.i<a.order.length){
+  const p=P(a.order[a.i]);
+  if(!p){a.i++;continue}
+  const m=a.kind==='hint'?p.hand.slice():p.hand.filter(c=>c===a.s||c===a.g||c===a.l);
+  if(m.length){a.cur=p.id;a.opts=m;sync();return}
+  if(a.kind==='ask'&&!a.who)hlog(p.name+' has none of those.');
+  a.i++;
+ }
+ finishAsk();
+}
+function doShow(pid,card){
+ const a=H.ask;if(!a||a.cur!==pid||!a.opts.includes(card))return;
+ const p=P(pid),asker=P(a.asker);
+ if(asker)deliver(asker.id,{type:'seen',card:card,from:p.name});
+ hlog(p.name+' showed '+(asker?asker.name:'')+' a card.');
+ a.shown=(a.shown||0)+1;
+ if(a.kind==='ask'&&!H.bay)a.i=a.order.length;else a.i++;
+ nextResponder();
+}
+function finishAsk(){
+ const a=H.ask;H.ask=null;
+ if(!a){sync();return}
+ if(a.kind==='hint'){enterMove();sync();return}
+ if(!a.shown){hlog(a.who?a.who+' had none of those cards!':'Nobody could show a card!');deliver(a.asker,{type:'noshow',s:a.s,g:a.g,l:a.l,who:a.who||''})}
+ H.step='after';sync();
+}
+function doAccuse(s,g,l){
+ if(!CARDS[s]||!CARDS[g]||!CARDS[l]||s[0]!=='S'||g[0]!=='G'||l[0]!=='L')return;
+ const p=cur();
+ if(s===H.env.s&&g===H.env.g&&l===H.env.l){H.phase='over';H.winner=p.id;H.step='';hlog(p.name+' solved the case!');sync();return}
+ hlog(p.name+' guessed '+CARDS[s].n+', '+CARDS[g].n+', '+CARDS[l].n+'. Not quite! Back to the Plaza.');
+ deliver(p.id,{type:'wrong'});
+ p.pos=PLAZA;p.skip=1;H.extra=false;endTurn();
+}
+function endTurn(){
+ if(H.extra){H.extra=false;hlog(cur().name+' gets another turn. Merienda!');startTurn();return}
+ H.turn=(H.turn+1)%H.players.length;startTurn();
+}
+function hostLeft(id){
+ if(!H)return;const idx=H.players.findIndex(p=>p.id===id);if(idx<0)return;
+ const p=H.players[idx];H.players.splice(idx,1);
+ if(H.phase!=='play'){sync();return}
+ H.faceUp=H.faceUp.concat(p.hand).sort();
+ hlog(p.name+' left the game. Their cards are now on the table for everyone.');
+ if(H.players.length<2){H.phase='over';H.winner=null;H.endWhy='Not enough detectives are left to keep playing.';sync();return}
+ if(idx<H.turn)H.turn--;
+ else if(idx===H.turn){H.turn=H.turn%H.players.length;startTurn();return}
+ if(H.ask&&H.ask.cur===id){nextResponder();return}
+ sync();
+}
+
+/* ---------- CLIENT ---------- */
+let S=null,lastGame=-1,tab=1,sheetKind='',queue=[],pick={},nb={},lastTurnKey='',lastRollSeq=0,quitting=false,lastOpts='';
+function nbLoad(gid){nb={gid:gid,seen:{},mark:{}};}
+function onMsg(m){if(!m)return;
+ if(m.type==='reject'){toast(m.why,4000);quitting=true;try{ws.close()}catch(e){}setTimeout(()=>location.reload(),3500);return}
+ if(m.type==='state'){const prev=S;S=m.v;
+  if(S.gameId!==lastGame){lastGame=S.gameId;nbLoad(S.gameId);queue=[];}
+  render(prev);return}
+ if(m.type==='seen'){nb.seen[m.card]=m.from;queue.push(m);beep(880);buzz(60);render();return}
+ if(m.type==='noshow'||m.type==='wrong'){queue.push(m);beep(330,.3);render();return}
+}
+function meP(){return S&&S.players.find(p=>p.id===S.me)}
+function curP(){return S&&S.players.find(p=>p.id===S.turnId)}
+function myTurn(){return S&&S.phase==='play'&&S.turnId===S.me}
+
+function render(prev){
+ if(!S)return;
+ if(S.phase==='lobby'){screen('lobby');renderLobby();closeSheet();return}
+ screen('game');
+ const key=S.turnId+'|'+S.step;
+ if(myTurn()&&S.step==='roll'&&key!==lastTurnKey){beep(660);setTimeout(()=>beep(990),150);buzz([80,60,80]);if(tab!==1)setTab(1)}
+ lastTurnKey=key;
+ renderTurnbar();renderBoard();renderAct();renderLog();
+ if(tab===2)renderCards();if(tab===3)renderNote();
+ renderSheet();
+}
+function renderLobby(){
+ $('hostinfo').innerHTML=isHost?'<div style="font-weight:800">You are hosting. Others can join from the list, or type:</div><div class="addr">'+esc(hostAddr||'this phone')+'</div>':'<div style="font-weight:800">Joined the game. Waiting for the host to start.</div>';
+ $('plist').innerHTML=S.players.map(p=>'<div class="pl">'+pawnHTML(p)+'<span>'+esc(p.name)+(p.id===S.host?' (host)':'')+(p.id===S.me?' · you':'')+'</span></div>').join('');
+ const n=S.players.length;
+ $('lobbynote').textContent=n<2?'You need at least 2 detectives to play.':n<4?n+' detectives are here. Up to 4 can play.':'4 detectives are here. The game is full.';
+ show('startBtn',isHost);$('startBtn').disabled=n<2;
+}
+function renderTurnbar(){
+ const c=curP(),tb=$('turnbar');
+ if(S.phase==='over'){tb.className='turnbar';tb.innerHTML='Case closed!';return}
+ if(!c){tb.innerHTML='';return}
+ tb.className='turnbar'+(myTurn()?' mine':'');
+ tb.innerHTML=pawnHTML(c)+'<span>'+(myTurn()?'Your turn!':esc(c.name)+'’s turn')+'</span>';
+}
+function renderBoard(){
+ const reach=new Set(S.reach||[]);const canMove=myTurn()&&S.step==='move';let h='';
+ for(let r=0;r<5;r++)for(let c=0;c<5;c++){
+  const re=r%2===0,ce=c%2===0;
+  if(re&&ce){const i=(r/2)*3+c/2,id=placeId(i),C=CARDS[id],here=S.players.filter(p=>p.pos===i);
+   const can=canMove&&reach.has(i);
+   h+='<button class="tile'+(i===PLAZA?' plaza':'')+(can?' reach':'')+'" data-i="'+i+'" '+(can?'':'tabindex="-1"')+' aria-label="'+esc(C.n)+(can?', tap to move here':'')+'">'+svg(C.i,'#1E7A4A')+'<span class="tn">'+esc(C.n)+'</span><span class="pawns">'+here.map(pawnHTML).join('')+'</span></button>';
+  }else if(re)h+='<div class="hroad" aria-hidden="true"></div>';
+  else if(ce)h+='<div class="vroad" aria-hidden="true"></div>';
+  else h+='<div aria-hidden="true"></div>';
+ }
+ $('board').innerHTML=h;
+ $('board').querySelectorAll('.tile.reach').forEach(b=>b.onclick=()=>{act({a:'move',to:+b.dataset.i});beep(520,.1)});
+}
+function dieHTML(n,spin){const on={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]}[n]||[];let h='';for(let i=0;i<9;i++)h+='<i class="'+(on.includes(i)?'on':'')+'"></i>';return '<div class="die'+(spin?' spin':'')+'" aria-label="Die shows '+(n||'nothing')+'">'+h+'</div>'}
+function moveText(){const r=S.roll;if(r===6)return 'Jeepney! Tap any glowing place.';if(r>=4)return 'Move 1 or 2 roads. Tap a glowing place.';return 'Move 1 road. Tap a glowing place.'}
+function renderAct(){
+ const el=$('act'),c=curP();let h='';
+ const spin=S.rollSeq!==lastRollSeq;lastRollSeq=S.rollSeq;
+ if(S.phase==='over'){el.innerHTML='<div class="msg">The case is closed.</div>';return}
+ if(!c){el.innerHTML='';return}
+ const place=CARDS[placeId(c.pos)].n;
+ if(myTurn()){
+  if(S.step==='roll'){h='<div class="dierow">'+dieHTML(0)+'<div style="flex:1"><button class="btn y wide" id="rollBtn">Roll the die</button></div></div><div class="rulesmini"><b>1</b><span>Draw a Balita card, then move 1 road</span><b>2–3</b><span>Move 1 road</span><b>4–5</b><span>Move 1 or 2 roads</span><b>6</b><span>Jeepney! Ride to any place</span></div>'}
+  else if(S.step==='move'){h='<div class="dierow">'+dieHTML(S.roll,spin)+'<div class="msg" style="margin:0">'+(S.roll===1?'Move 1 road. Tap a glowing place.':moveText())+'</div></div>'}
+  else if(S.step==='balita'){h='<div class="dierow">'+dieHTML(S.roll,spin)+'<div class="msg" style="margin:0">You rolled 1. Balita!</div></div>'}
+  else if(S.step==='answer'){h='<div class="msg">Waiting for '+esc(S.ask&&S.ask.curName)+' to show you a card…</div>'+askLine()}
+  else if(S.step==='ask'){
+   if(S.noAsk)h='<div class="msg">You are at the '+esc(place)+'. Brownout! No questions this turn.</div><div class="row"><button class="btn y" id="solveBtn">Lutasin! Solve</button><button class="btn" id="endBtn">End turn</button></div>';
+   else h='<div class="msg">You are at the '+esc(place)+'. Ask another player a question'+(S.bay?' (Bayanihan: everyone answers!)':'')+', or solve the case.</div><div class="stack"><button class="btn b wide" id="askBtn">Tanong! Ask about the '+esc(place)+'</button><button class="btn y wide" id="solveBtn">Lutasin! Solve instead</button></div>';
+  }else if(S.step==='after'){h='<div class="msg">Check your notebook. Ready to solve the case?</div><div class="row"><button class="btn y" id="solveBtn">Lutasin! Solve</button><button class="btn" id="endBtn">End turn</button></div>'}
+ }else{
+  const nm=esc(c.name);
+  if(S.step==='roll')h='<div class="msg">'+nm+' is rolling the die…</div>';
+  else if(S.step==='move')h='<div class="dierow">'+dieHTML(S.roll,spin)+'<div class="msg" style="margin:0">'+nm+' is moving…</div></div>';
+  else if(S.step==='balita')h='<div class="msg">'+nm+' drew a Balita card!</div>';
+  else if(S.step==='answer')h='<div class="msg">'+(S.ask&&S.ask.curId===S.me?'Your turn to show '+nm+' a card.':'Waiting for '+esc(S.ask&&S.ask.curName)+' to show '+nm+' a card…')+'</div>'+askLine();
+  else if(S.step==='ask')h='<div class="msg">'+nm+' is at the '+esc(place)+' and is thinking…</div>';
+  else if(S.step==='after')h='<div class="msg">'+nm+' is checking their notebook…</div>'+askLine();
+ }
+ el.innerHTML=h;
+ const b=(id,f)=>{const x=$(id);if(x)x.onclick=f};
+ b('rollBtn',()=>{act({a:'roll'});beep(440,.1)});
+ b('askBtn',()=>openSheet('ask'));
+ b('solveBtn',()=>openSheet('solve'));
+ b('endBtn',()=>act({a:'end'}));
+}
+function askLine(){const a=S.ask;if(!a||a.kind!=='ask')return '';return '<div class="note" style="margin-top:6px">Asked '+esc(a.who||'everyone')+': '+esc(CARDS[a.s].n)+', '+esc(CARDS[a.g].n)+', '+esc(CARDS[a.l].n)+'</div>'}
+function renderLog(){$('log').innerHTML=(S.log||[]).slice(0,4).map(s=>'<div>'+esc(s)+'</div>').join('')}
+function renderCards(){
+ const t=$('tabCards');
+ let h='<div class="sec">Your cards</div><p class="note" style="margin-top:0">These are not in the Case Envelope. Keep them secret!</p><div class="cards">'+S.hand.map(id=>cardHTML(id)).join('')+'</div>';
+ if(S.faceUp.length)h+='<div class="sec">On the table</div><p class="note" style="margin-top:0">Everyone can see these. They are not in the envelope either.</p><div class="cards">'+S.faceUp.map(id=>cardHTML(id)).join('')+'</div>';
+ const seen=Object.keys(nb.seen||{});
+ if(seen.length)h+='<div class="sec">Cards you were shown</div><div class="cards">'+seen.map(id=>cardHTML(id)).join('')+'</div>';
+ t.innerHTML=h;
+}
+function known(id){if(S.hand.includes(id))return 'Your card';if(S.faceUp.includes(id))return 'On the table';if(nb.seen[id])return 'Shown by '+nb.seen[id];return ''}
+function renderNote(){
+ const t=$('tabNote');let h='<div class="sec" style="margin-top:4px">Detective Notebook</div><p class="note" style="margin-top:0">Cards you know are crossed off for you. Tap the box to add your own marks: ✕ not it, ? maybe, ✓ I think so.</p><div class="nb">';
+ for(const k of ['S','G','L']){const K=KIND[k],ids=IDS(k);const left=ids.filter(id=>!known(id)&&nb.mark[id]!=='x').length;
+  h+='<div class="nbsec" style="--c:'+K.c+'"><div class="hd"><span>'+K.label+' · '+K.word+'?</span><span>'+(left===1?'Only 1 left!':left+' left')+'</span></div>';
+  for(const id of ids){const kn=known(id),m=nb.mark[id]||'';const out=!!kn||m==='x';
+   h+='<div class="nbrow'+(out?' out':'')+'"><div style="flex:1;min-width:0"><div class="nm">'+esc(CARDS[id].n)+'</div>'+(kn?'<div class="why">'+esc(kn)+'</div>':'')+'</div>'+(kn?'<span class="mark x" style="display:inline-flex;align-items:center;justify-content:center" aria-label="known">✕</span>':'<button class="mark '+(m==='x'?'x':m==='q'?'q':m==='k'?'k':'')+'" data-id="'+id+'" aria-label="Mark '+esc(CARDS[id].n)+'">'+(m==='x'?'✕':m==='q'?'?':m==='k'?'✓':'')+'</button>')+'</div>'}
+  h+='</div>'}
+ h+='</div>';
+ const lg=(S.log||[]);
+ t.innerHTML=h;
+ t.querySelectorAll('button.mark').forEach(b=>b.onclick=()=>{const id=b.dataset.id,m=nb.mark[id]||'';nb.mark[id]=m===''?'x':m==='x'?'q':m==='q'?'k':'';renderNote()});
+}
+function setTab(n){tab=n;show('tabBoard',n===1);show('tabCards',n===2);show('tabNote',n===3);['tb1','tb2','tb3'].forEach((id,i)=>$(id).setAttribute('aria-selected',String(i+1===n)));if(n===2)renderCards();if(n===3)renderNote();window.scrollTo(0,0)}
+$('tb1').onclick=()=>setTab(1);$('tb2').onclick=()=>setTab(2);$('tb3').onclick=()=>setTab(3);
+
+/* ---------- sheets / modals ---------- */
+function openSheet(k){sheetKind=k;pick={};renderSheet()}
+function closeSheet(){sheetKind='';show('scrim',false)}
+function chipRow(k,sel){const K=KIND[k];return '<div class="chips">'+IDS(k).map(id=>{const kn=known(id)||nb.mark[id]==='x';return '<button class="chip'+(kn?' gone':'')+'" style="--c:'+K.c+'" data-k="'+k+'" data-id="'+id+'" aria-pressed="'+(sel===id)+'">'+esc(CARDS[id].n)+'</button>'}).join('')+'</div>'}
+function renderSheet(){
+ const sh=$('sheet');let h='',on=true;
+ if(S&&S.phase==='over'){
+  const a=S.answer,w=S.players.find(p=>p.id===S.winner);
+  if(a){h='<div class="confetti">Mabuhay ang fiesta!</div><h2 style="text-align:center">'+(w?(w.id===S.me?'You solved the case!':esc(w.name)+' solved the case!'):'Case closed')+'</h2>'+(S.endWhy?'<p class="note">'+esc(S.endWhy)+'</p>':'')+'<div class="three">'+cardHTML(a.s)+cardHTML(a.g)+cardHTML(a.l)+'</div><p style="font-weight:700;line-height:1.45">'+esc(CARDS[a.s].n)+' borrowed the '+esc(CARDS[a.g].n)+' and left it at the '+esc(CARDS[a.l].n)+'. '+esc(CARDS[a.s].n)+' says sorry and gives it back, just in time for the parade!</p>'+(isHost?'<div class="row"><button class="btn y" id="againBtn">Play again</button><button class="btn" id="lobbyBtn">Back to lobby</button></div>':'<p class="note">Waiting for the host to start a new case.</p>')}
+  sh.innerHTML=h;show('scrim',true);
+  const x=$('againBtn');if(x)x.onclick=()=>act({a:'start'});const y=$('lobbyBtn');if(y)y.onclick=()=>act({a:'lobby'});return;
+ }
+ if(S&&S.opts&&S.opts.length&&S.ask){
+  const a=S.ask,k=S.opts.join(',')+a.kind;
+  if(k!==lastOpts){lastOpts=k;beep(700);buzz([60,40,60])}
+  h='<h2>'+(a.kind==='hint'?'Kapitbahay Hint!':'Show a card')+'</h2><p style="font-weight:700;margin-top:0">'+(a.kind==='hint'?esc(a.askerName)+' gets a hint from you. Pick any one of your cards to show.':esc(a.askerName)+' asked about '+esc(CARDS[a.s].n)+', '+esc(CARDS[a.g].n)+' and '+esc(CARDS[a.l].n)+'. Pick one card to show. Only '+esc(a.askerName)+' will see it.')+'</p><div class="cards">'+S.opts.map(id=>'<button class="showc" data-id="'+id+'" style="all:unset;cursor:pointer;display:block" aria-label="Show '+esc(CARDS[id].n)+'">'+cardHTML(id)+'</button>').join('')+'</div>';
+  sh.innerHTML=h;show('scrim',true);
+  sh.querySelectorAll('.showc').forEach(b=>b.onclick=()=>{act({a:'show',card:b.dataset.id});lastOpts='';closeSheet()});return;
+ }
+ if(S&&S.phase==='play'&&S.step==='balita'&&S.balita){
+  const c=curP();h='<h2 style="text-align:center">Balita!</h2><p style="text-align:center;font-weight:700;margin-top:0">'+(myTurn()?'You rolled 1 and drew:':esc(c.name)+' rolled 1 and drew:')+'</p>'+cardHTML(S.balita,true)+'<div style="margin-top:14px">'+(myTurn()?'<button class="btn y wide" id="bOk">OK</button>':'<p class="note" style="text-align:center">Waiting for '+esc(c.name)+'…</p>')+'</div>';
+  sh.innerHTML=h;show('scrim',true);const b=$('bOk');if(b)b.onclick=()=>act({a:'balitaOk'});return;
+ }
+ if(queue.length){const m=queue[0];
+  if(m.type==='seen')h='<h2 style="text-align:center">'+esc(m.from)+' showed you</h2>'+cardHTML(m.card,true)+'<p class="note" style="text-align:center">It is crossed off in your notebook.</p>';
+  else if(m.type==='noshow')h=m.who?'<h2>'+esc(m.who)+' has none of those!</h2><p style="font-weight:700">'+esc(m.who)+' does not have '+esc(CARDS[m.s].n)+', '+esc(CARDS[m.g].n)+' or '+esc(CARDS[m.l].n)+'. Remember that clue, detective!</p>':'<h2>Nobody had those cards!</h2><p style="font-weight:700">No one could show you '+esc(CARDS[m.s].n)+', '+esc(CARDS[m.g].n)+' or '+esc(CARDS[m.l].n)+'. Any of them you don’t hold might be in the Case Envelope. Big clue!</p>';
+  else if(m.type==='wrong')h='<h2>Not quite!</h2><p style="font-weight:700">That is not the answer. Your pawn goes back to the Plaza and you skip your next turn. Keep looking, detective!</p>';
+  h+='<button class="btn y wide" id="qOk" style="margin-top:12px">Got it</button>';
+  sh.innerHTML=h;show('scrim',true);$('qOk').onclick=()=>{queue.shift();renderSheet()};return;
+ }
+ if(sheetKind&&myTurn()&&(S.step==='ask'||S.step==='after')){
+  const solve=sheetKind==='solve';
+  if(!solve&&(S.step!=='ask'||S.noAsk)){closeSheet();return}
+  const place=placeId(meP().pos);
+  h='<h2>'+(solve?'Lutasin! Solve the case':'Tanong! Ask a question')+'</h2><p class="note" style="margin-top:0">'+(solve?'Pick who, what and where. If you are wrong, you go back to the Plaza and skip a turn.':'You are asking about the '+esc(CARDS[place].n)+'. Faded names are already crossed off.')+'</p>';
+  const others=S.players.filter(p=>p.id!==S.me);
+  if(!solve){if(S.bay)h+='<div class="lbl">Bayanihan! Everyone will answer.</div>';else{if(others.length===1)pick.P=others[0].id;h+='<div class="lbl">Who will you ask?</div><div class="chips">'+others.map(p=>'<button class="chip pchip" style="--c:#1d1b33" data-p="'+p.id+'" aria-pressed="'+(pick.P===p.id)+'">'+esc(p.name)+'</button>').join('')+'</div>'}}
+  h+='<div class="lbl">Who borrowed it?</div>'+chipRow('S',pick.S)+'<div class="lbl">What did they borrow?</div>'+chipRow('G',pick.G);
+  if(solve)h+='<div class="lbl">Where is it?</div>'+chipRow('L',pick.L);
+  const ok=pick.S&&pick.G&&(solve?pick.L:(S.bay||pick.P));
+  h+='<div class="row" style="margin-top:14px"><button class="btn '+(solve?'y':'b')+'" id="goBtn" '+(ok?'':'disabled')+'>'+(solve?'Lutasin!':'Ask')+'</button><button class="btn" id="cancelBtn">Cancel</button></div>';
+  sh.innerHTML=h;show('scrim',true);
+  sh.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{if(b.dataset.p)pick.P=b.dataset.p;else pick[b.dataset.k]=b.dataset.id;renderSheet()});
+  $('cancelBtn').onclick=closeSheet;
+  $('goBtn').onclick=()=>{if(solve)act({a:'accuse',s:pick.S,g:pick.G,l:pick.L});else act({a:'ask',s:pick.S,g:pick.G,to:pick.P});closeSheet()};
+  return;
+ }
+ if(sheetKind==='menu'){
+  h='<h2>Menu</h2><div class="stack"><button class="btn wide" id="mHow">How to play</button><button class="btn r wide" id="mLeave">Leave the game</button><button class="btn wide" id="mClose">Back to the game</button></div>'+(isHost?'<p class="note">You are the host. If you leave, the game ends for everyone.</p>':'');
+  sh.innerHTML=h;show('scrim',true);$('mHow').onclick=()=>openSheet('how');$('mLeave').onclick=leave;$('mClose').onclick=closeSheet;return;
+ }
+ if(sheetKind==='how'){sh.innerHTML=howHTML();show('scrim',true);$('hClose').onclick=()=>{S&&S.phase==='play'?openSheet('menu'):closeSheet()};return}
+ sheetKind='';show('scrim',false);
+}
+function howHTML(){return '<h2>How to play</h2><div style="line-height:1.5"><p style="margin-top:0"><b>Bukas na ang fiesta!</b> One of the six fiesta treasures is missing. Someone borrowed it without asking. Find out <b>who</b> borrowed it, <b>what</b> it is, and <b>where</b> it was left.</p><p>The phone secretly puts one Suspek, one Gamit and one Lugar card in the Case Envelope and deals the rest to the players.</p><p><b>On your turn:</b> roll the die and move along the roads. Then ask a <b>Tanong</b> about the place you are in, plus any suspect and any item, and pick which player to ask. If they have one of those cards, they secretly show you one. You must ask every turn, unless a Brownout stops you or you try to solve the case.</p><p>Your notebook crosses off every card you know. When you think you know the answer, tap <b>Lutasin!</b> Guess right and you win. Guess wrong and you go back to the Plaza and skip a turn.</p><p><b>Rolling a 1</b> gives you a Balita card: a jeepney ride, a brownout, merienda and more.</p><p>For little detectives: a grown-up and a child can share one phone as a team.</p></div><button class="btn y wide" id="hClose">Got it</button>'}
+$('menuBtn').onclick=()=>openSheet('menu');
+$('howBtn').onclick=()=>openSheet('how');
+$('scrim').addEventListener('click',e=>{if(e.target===$('scrim')&&(sheetKind==='ask'||sheetKind==='solve'||sheetKind==='menu'||sheetKind==='how'))closeSheet()});
+
+/* ---------- title / lobby ---------- */
+try{$('name').value=localStorage.getItem('kaso-name')||''}catch(e){}
+function getName(){const n=clean($('name').value).slice(0,12);if(!n){$('name').focus();toast('Type your name first.');return ''}try{localStorage.setItem('kaso-name',n)}catch(e){}return n}
+let busy=false;
+async function begin(hostIt,ip){
+ if(busy)return;const name=getName();if(!name)return;
+ if(!LAN){toast('Hosting and joining work in the Android app.',3500);return}
+ let url;
+ if(hostIt){const r=String(Android.startHost(name)||'');if(r==='ERR'){toast('Could not start a game on this phone. Try again.');return}hostAddr=r;url='ws://127.0.0.1:'+PORT}
+ else{const a=clean(ip||$('ipin').value).replace(/[^0-9.]/g,'');if(!/^\d{1,3}(\.\d{1,3}){3}$/.test(a)){toast('Pick a game from the list, or type the host’s address.');return}url='ws://'+a+':'+PORT}
+ busy=true;
+ let tries=hostIt?6:1;
+ while(tries-->0&&!connected){try{await connect(url)}catch(e){await new Promise(r=>setTimeout(r,500))}}
+ busy=false;
+ if(!connected){if(hostIt){try{Android.stopHost()}catch(e){}}toast(hostIt?'Could not start the game on this phone.':'Could not reach that game. Make sure you are on the same Wi-Fi.',4500);return}
+ try{Android.stopDiscovery()}catch(e){}
+ if(isHost)H=newHost();
+ act({a:'hello',name:name});
+}
+function leave(){quitting=true;try{ws&&ws.close()}catch(e){}if(isHost){try{Android.stopHost()}catch(e){}}location.reload()}
+$('hostBtn').onclick=()=>begin(true);
+$('joinBtn').onclick=()=>begin(false);
+$('leaveBtn').onclick=leave;
+$('startBtn').onclick=()=>act({a:'start'});
+let lastRooms='';
+window.lanRooms=list=>{const k=JSON.stringify(list);if(k===lastRooms)return;lastRooms=k;const el=$('roomlist');el.textContent='';
+ if(!list||!list.length){const p=document.createElement('p');p.className='note';p.style.margin='0';p.textContent='No games found yet. Ask the host to tap Host a game.';el.appendChild(p);return}
+ for(const r of list){const b=document.createElement('button');b.className='btn b wide';b.textContent='Join '+(clean(r.name).slice(0,12)||'a')+'’s game';b.onclick=()=>begin(false,String(r.ip));el.appendChild(b)}};
+let backT=0;
+window.onBack=()=>{if(!$('scrim').classList.contains('hide')&&(sheetKind==='ask'||sheetKind==='solve'||sheetKind==='menu'||sheetKind==='how')){closeSheet();return true}
+ if(!connected)return false;if(tab!==1){setTab(1);return true}
+ const n=Date.now();if(n-backT<2000){leave();return true}backT=n;toast('Press back again to leave the game');return true};
+if(LAN){try{Android.startDiscovery()}catch(e){}}
+else{$('roomlist').innerHTML='<p class="note" style="margin:0">Wi-Fi games work in the Android app.</p>'}
+</script>
+</body>
+</html>
