@@ -1,7 +1,15 @@
 package com.markdave.kaso;
 
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.net.wifi.WifiManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
@@ -9,6 +17,10 @@ import android.webkit.WebView;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.Inet4Address;
@@ -95,6 +107,68 @@ public class LanBridge {
     public synchronized void stopDiscovery() {
         listenOn = false;
         try { if (lock != null && lock.isHeld()) lock.release(); } catch (Exception ignored) { }
+    }
+
+    /** Saves the printable PDF to Downloads and opens it. Returns "DOWNLOADS", "APP:<path>" or "ERR". */
+    @JavascriptInterface
+    public String savePdf() {
+        String name = "Kaso-sa-Kalye-print-and-play.pdf";
+        try (InputStream in = act.getAssets().open("www/kaso-print-and-play.pdf")) {
+            if (Build.VERSION.SDK_INT >= 29) {
+                ContentValues v = new ContentValues();
+                v.put(MediaStore.MediaColumns.DISPLAY_NAME, name);
+                v.put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf");
+                v.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+                Uri uri = act.getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, v);
+                if (uri == null) return "ERR";
+                try (OutputStream out = act.getContentResolver().openOutputStream(uri)) {
+                    if (out == null) return "ERR";
+                    copy(in, out);
+                }
+                openPdf(uri);
+                return "DOWNLOADS";
+            } else {
+                File dir = act.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+                if (dir == null) return "ERR";
+                File f = new File(dir, name);
+                try (OutputStream out = new FileOutputStream(f)) {
+                    copy(in, out);
+                }
+                return "APP:" + f.getAbsolutePath();
+            }
+        } catch (Exception e) {
+            return "ERR";
+        }
+    }
+
+    /** Copies text to the phone's clipboard. */
+    @JavascriptInterface
+    public boolean copyText(String text) {
+        final String t = text == null ? "" : text;
+        act.runOnUiThread(() -> {
+            try {
+                ClipboardManager cm = (ClipboardManager) act.getSystemService(Context.CLIPBOARD_SERVICE);
+                if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("Art prompt", t));
+            } catch (Exception ignored) { }
+        });
+        return true;
+    }
+
+    private void openPdf(Uri uri) {
+        act.runOnUiThread(() -> {
+            try {
+                Intent i = new Intent(Intent.ACTION_VIEW);
+                i.setDataAndType(uri, "application/pdf");
+                i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                act.startActivity(i);
+            } catch (Exception ignored) { }
+        });
+    }
+
+    private static void copy(InputStream in, OutputStream out) throws java.io.IOException {
+        byte[] buf = new byte[16384];
+        int n;
+        while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
     }
 
     void shutdown() {
